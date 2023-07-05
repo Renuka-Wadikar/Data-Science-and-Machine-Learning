@@ -3,7 +3,7 @@ import util.util as util
 import base64
 
 def add_bg_from_local(image_file):
-    with open('/artifacts/images.jpg', "rb") as image_file:
+    with open('Bengaluru_House_price_data/streamlit-app/artifacts/images.jpg', "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read())
     st.markdown(
     f"""
@@ -23,7 +23,7 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local('/artifacts/images.jpg')
+add_bg_from_local('Bengaluru_House_price_data/streamlit-app/artifacts/images.jpg')
 
 
 __predicted_price = None
