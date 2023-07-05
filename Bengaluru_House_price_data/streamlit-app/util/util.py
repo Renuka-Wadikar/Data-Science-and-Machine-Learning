@@ -33,12 +33,12 @@ def load_saved_artifacts():
     global __locations
     global __model
     
-    with open('./artifacts/columns.json','r') as file:
+    with open('Bengaluru_House_price_data/streamlit-app/artifacts/columns.json','r') as file:
         __data_col = json.load(file)['data_columns']
         __locations = __data_col[3:]
         __locations = __locations + ['other']
         
-    with open('./artifacts/banglore_price_prediction.pickle','rb') as f:
+    with open('Bengaluru_House_price_data/streamlit-app/artifacts/banglore_price_prediction.pickle','rb') as f:
         __model = pickle.load(f)
     print('<<<<------Loading saved artifacts Sucess!!!---->>>>')
 
