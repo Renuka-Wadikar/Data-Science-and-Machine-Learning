@@ -38,8 +38,8 @@ with st.container():
     st.title('Bengluru House Prediction')
     content = "This website is the frontend implementation of a Linear Regression model used for predicting Prices of Benguluru house predictions based on a Kaggle dataset"
     st.info(content)
-
-    with st.form('my_form',clear_on_submit=True):
+    
+    with st.form('my_form'):
         st.header('Select Location')
         locations = util.get_location_names()
         selected_location = st.selectbox(
