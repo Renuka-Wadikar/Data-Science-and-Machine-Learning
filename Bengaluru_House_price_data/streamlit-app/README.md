@@ -9,7 +9,8 @@ Our aim is to create a  basic `regression model` that is able to predict house p
 
 The frontend Web application is based on Streamlit and deployed on streamlit server with github
 
-Checkout this project on website
+Checkout this project on website 
+<a href='https://data-science-and-machine-learning-ecpvse4wfih.streamlit.app/'>https://data-science-and-machine-learning-ecpvse4wfih.streamlit.app/</a>
 
 Dataset link
 <a href='https://www.kaggle.com/amitabhajoy/bengaluru-house-price-data'>https://www.kaggle.com/amitabhajoy/bengaluru-house-price-data</a>
