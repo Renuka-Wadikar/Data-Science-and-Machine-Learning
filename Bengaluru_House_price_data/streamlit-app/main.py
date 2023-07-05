@@ -23,7 +23,7 @@ def add_bg_from_local(image_file):
     )
 
 
-add_bg_from_local('images.jpg')
+add_bg_from_local('/artifacts/images.jpg')
 
 
 __predicted_price = None
