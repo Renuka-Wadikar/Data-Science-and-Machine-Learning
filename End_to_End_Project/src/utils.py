@@ -3,6 +3,7 @@ import sys
 import pandas as pd
 import numpy as np
 import dill
+import pickle
 
 from sklearn.metrics import r2_score
 from sklearn.model_selection import GridSearchCV
@@ -59,5 +60,14 @@ def evaluate_model(X_train,y_train,X_test,y_test,models,params):
 
     except Exception as e:
         exp = CustomException(e,sys)
-        logging.info(f'ERROR Occured: {exp.error_msg}')
+        logging.info(f'Exception Occured: {exp.error_msg}')
+        raise exp
+    
+def load_objects(file_path):
+    try:
+        with open(file_path,'rb') as f:
+            return pickle.load(f)
+    except Exception as e:
+        exp = CustomException(e,sys)
+        logging.info(f'Exception Occured: {exp.error_msg}')
         raise exp
