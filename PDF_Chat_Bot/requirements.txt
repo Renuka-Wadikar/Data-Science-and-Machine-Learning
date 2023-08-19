@@ -4,3 +4,8 @@ langchain
 python-dotenv
 openai
 huggingface_hub
+InstructorEmbedding
+sentence_transformers
+faiss-cpu
+
+#-e .
