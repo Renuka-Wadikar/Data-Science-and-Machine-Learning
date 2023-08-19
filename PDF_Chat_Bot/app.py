@@ -1,10 +1,12 @@
 import streamlit as st
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
+import os
+import pickle as pkl
 
 #for creating chunks
-from langchain.text_splitter import CharacterTextSplitter
-
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains import LLMChain
 #for word embedding
 from langchain.embeddings import OpenAIEmbeddings,HuggingFaceInstructEmbeddings
 from langchain.vectorstores import FAISS
@@ -13,11 +15,15 @@ from langchain.vectorstores import FAISS
 from langchain.memory import ConversationBufferMemory
 
 from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT, QA_PROMPT
+
+
 
 from langchain.chat_models import ChatOpenAI
 from template import css,user_template,bot_template
 
 from langchain.llms import HuggingFaceHub
+from langchain.chains.question_answering import load_qa_chain
 
 def get_pdf_text(pdf):
     """Extract text from a PDF document."""
@@ -29,17 +35,17 @@ def get_pdf_text(pdf):
 
 def get_text_chunks(raw_txt):
     """Extract chunks from raw text"""
-    text_spliter = CharacterTextSplitter(
-        separator='\n',
+    text_spliter = RecursiveCharacterTextSplitter(
         chunk_size = 1000,
         chunk_overlap = 200,
         length_function = len        
     )
+
     chunks = text_spliter.split_text(raw_txt)
     return chunks
 
 #use this function for faster processing and is a paid version
-def get_vector_store_openAPI(chunks):
+def get_vector_store_openAPI(chunks,pdf_name):
     """
         Exttract and maintain word embedding from chunks of text 
 
@@ -49,33 +55,42 @@ def get_vector_store_openAPI(chunks):
     
     return vector_stores
 
-def get_vector_store(chunks):
+def get_vector_store(chunks,pdf_name):
     """
-        Exttract and maintain word embedding from chunks of text 
+        Exttract and maintain word embedding from chunks of text for given pdf
+        Saves the word Embedding into a pickle model 
 
     """
-    embeddings = HuggingFaceInstructEmbeddings(model_name ='hkunlp/instructor-base' )
-    vector_stores = FAISS.from_texts(texts=chunks,embedding=embeddings)
-    
+    if os.path.exists(f'{pdf_name}.pkl'):
+        with open (f"{pdf_name}.pkl", "rb") as f:
+            vector_stores = pkl.load(f)
+    else:
+        embeddings = HuggingFaceInstructEmbeddings(model_name ='hkunlp/instructor-large' )
+        vector_stores = FAISS.from_texts(texts=chunks,embedding=embeddings)
+        with open(f"{pdf_name}.pkl",'wb') as f:
+            pkl.dump(vector_stores,f)
+        
     return vector_stores
 
-
 def get_conversation_chain(vector_store):
-    #for faster communication uncomment the following line and comment line after that
-    #llm = ChatOpenAI()
+    '''
+    Create a Converation chain, for given vector store, chat history and specific prompt format.
+    '''
     llm = HuggingFaceHub(repo_id='google/flan-t5-xxl',
                          model_kwargs = {'temperature':0.5,
                                          'max_length':512})
-
-    
+    question_generator = LLMChain(llm=llm,
+                                  prompt = CONDENSE_QUESTION_PROMPT)
+    chain = load_qa_chain(llm=llm,chain_type='stuff',prompt=QA_PROMPT)
     memory = ConversationBufferMemory(memory_key='chat_history',return_messages=True)
-    conversation_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
+    conversation_chain = ConversationalRetrievalChain(
         retriever=vector_store.as_retriever(),
-        memory = memory
+        combine_docs_chain=chain,
+        memory = memory,
+        question_generator=question_generator
     )
     return conversation_chain
-   
+
 def handle_user_input(question):
     response = st.session_state.conversation({'question':question})
     st.session_state.chat_history = response['chat_history']
@@ -109,7 +124,7 @@ def main():
         
     with st.sidebar:
         st.subheader('Upload File Here!:open_file_folder:')
-        pdf_doc = st.file_uploader('Upload the file or Drag and drop below. Then click on proceed!')
+        pdf_doc = st.file_uploader('Upload the file or Drag and drop below. Then click on proceed!',type='pdf')
        
         if st.button('Process :heavy_check_mark:'):
             with st.spinner('Preprocessing'):
@@ -120,12 +135,18 @@ def main():
                 text_chunks = get_text_chunks(raw_text)
             
             
-                #create vector store 
-                vectors_store = get_vector_store(text_chunks)
+                #create vector store for each pdf
+                pdf_name = pdf_doc.name[:-4]
+                vectors_store = get_vector_store(text_chunks,pdf_name)
             
 
                 #create conversation chain
                 st.session_state.conversation = get_conversation_chain(vectors_store)
+        
+        if not pdf_doc:
+
+            st.session_state.chat_history = None
+            st.session_state.conversation = None
            
             
 
